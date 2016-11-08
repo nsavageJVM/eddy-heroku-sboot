@@ -1,0 +1,72 @@
+buildscript {
+	ext {
+		springBootVersion = '1.4.0.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2' 
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'spring-boot'
+
+jar {
+	baseName = 'microserver'
+	version = '0.0.1-SNAPSHOT'
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-actuator')
+	compile('org.springframework.boot:spring-boot-starter-web')
+	compile('org.springframework.boot:spring-boot-starter-hateoas')
+	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
+
+	compile('org.postgresql:postgresql:9.4-1201-jdbc4')
+	compile('org.projectlombok:lombok:1.16.10')
+
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+
+task  deployArtifact (type: Copy, dependsOn: 'bootRepackage') {
+
+	File deployFolder = new File(project.projectDir, "artifacts")
+	File targetFolder = new File(project.projectDir, "build/libs/microserver-0.0.1-SNAPSHOT.jar")
+
+	println("deployFolder = ${deployFolder.absolutePath}")
+	println("targetFolder = ${targetFolder.absolutePath}")
+
+	from targetFolder
+	into deployFolder
+	rename { filename ->
+		filename.replace 'microserver-0.0.1-SNAPSHOT', 'micro_s'
+	}
+
+}
+
+
+task runServer(type: Exec) {
+
+	doFirst {
+		println "Starting Server..."
+		File workingDir = new File(project.projectDir, "artifacts")
+		println "RUNNING IN  workingDir : ${workingDir}"
+
+		commandLine   "java", "-jar", "${workingDir}/micro_s.jar"
+	}
+}
